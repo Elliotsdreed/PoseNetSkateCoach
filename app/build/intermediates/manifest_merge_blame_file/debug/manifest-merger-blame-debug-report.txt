@@ -27,7 +27,7 @@
 17        android:allowBackup="true"
 17-->C:\Users\Elliott\Documents\UnderGraduate PoseNet Lite\examples-master\lite\examples\posenet\android\app\src\main\AndroidManifest.xml:13:7-33
 18        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
-18-->[androidx.core:core:1.1.0] C:\Users\Elliott\.gradle\caches\transforms-3\ec8502a66f47e53642e4c7b31f685bba\transformed\core-1.1.0\AndroidManifest.xml:24:18-86
+18-->[androidx.core:core:1.2.0] C:\Users\Elliott\.gradle\caches\transforms-3\04202722d7966777c4d05e160bac8af0\transformed\core-1.2.0\AndroidManifest.xml:24:18-86
 19        android:debuggable="true"
 20        android:icon="@mipmap/ic_launcher"
 20-->C:\Users\Elliott\Documents\UnderGraduate PoseNet Lite\examples-master\lite\examples\posenet\android\app\src\main\AndroidManifest.xml:14:7-41

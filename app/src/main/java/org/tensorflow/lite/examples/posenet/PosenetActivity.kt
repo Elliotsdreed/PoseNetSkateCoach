@@ -19,6 +19,7 @@ package org.tensorflow.lite.examples.posenet
 import android.Manifest
 import android.app.AlertDialog
 import android.app.Dialog
+import android.content.ContentValues
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -38,10 +39,9 @@ import android.hardware.camera2.CaptureRequest
 import android.media.Image
 import android.media.ImageReader
 import android.media.ImageReader.OnImageAvailableListener
-import android.os.Bundle
-import android.os.Handler
-import android.os.HandlerThread
-import android.os.Process
+import android.net.Uri
+import android.os.*
+import android.provider.MediaStore
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import android.util.Log
@@ -61,8 +61,16 @@ import kotlin.math.abs
 import org.tensorflow.lite.examples.posenet.lib.BodyPart
 import org.tensorflow.lite.examples.posenet.lib.Person
 import org.tensorflow.lite.examples.posenet.lib.Posenet
+import java.io.File
+import java.io.FileOutputStream
+import java.io.OutputStream
 import kotlin.math.PI
 import kotlin.math.atan2
+import android.os.Build
+import android.os.Bundle
+import android.os.Environment
+
+
 
 class PosenetActivity :
   Fragment(),
@@ -207,7 +215,7 @@ class PosenetActivity :
   override fun onStart() {
     super.onStart()
     openCamera()
-    posenet = Posenet(this.context!!)
+    posenet = Posenet(this.requireContext())
   }
 
   override fun onPause() {
@@ -305,14 +313,14 @@ class PosenetActivity :
    * Opens the camera specified by [PosenetActivity.cameraId].
    */
   private fun openCamera() {
-    val permissionCamera = getContext()!!.checkPermission(
+    val permissionCamera = requireContext().checkPermission(
       Manifest.permission.CAMERA, Process.myPid(), Process.myUid()
     )
     if (permissionCamera != PackageManager.PERMISSION_GRANTED) {
       requestCameraPermission()
     }
     setUpCameraOutputs()
-    val manager = activity!!.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+    val manager = requireActivity().getSystemService(Context.CAMERA_SERVICE) as CameraManager
     try {
       // Wait for camera to open - 2.5 seconds is sufficient
       if (!cameraOpenCloseLock.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
@@ -688,6 +696,34 @@ class PosenetActivity :
     surfaceHolder!!.unlockCanvasAndPost(canvas)
   }
 
+  //the function I already explained, it is used to save the Bitmap to external storage
+  private fun saveMediaToStorage(bitmap: Bitmap) {
+    val filename = "${System.currentTimeMillis()}.jpg"
+    var fos: OutputStream? = null
+    var contentResolver = requireActivity().contentResolver
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+      contentResolver?.also { resolver ->
+        val contentValues = ContentValues().apply {
+          put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
+          put(MediaStore.MediaColumns.MIME_TYPE, "image/jpg")
+          put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
+        }
+        val imageUri: Uri? =
+                resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+        fos = imageUri?.let { resolver.openOutputStream(it) }
+      }
+    } else {
+      val imagesDir =
+              Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+      val image = File(imagesDir, filename)
+      fos = FileOutputStream(image)
+    }
+    fos?.use {
+      bitmap.compress(Bitmap.CompressFormat.JPEG, 100, it)
+      Toast.makeText(context,"Saved to Photos", Toast.LENGTH_SHORT)
+    }
+  }
+
   /** Process image using Posenet library.   */
   private fun processImage(bitmap: Bitmap) {
     // Crop bitmap.
@@ -695,7 +731,7 @@ class PosenetActivity :
 
     // Created scaled version of bitmap for model input.
     val scaledBitmap = Bitmap.createScaledBitmap(croppedBitmap, MODEL_WIDTH, MODEL_HEIGHT, true)
-
+    saveMediaToStorage(scaledBitmap)
     // Perform inference.
     val person = posenet.estimateSinglePose(scaledBitmap)
     val canvas: Canvas = surfaceHolder!!.lockCanvas()
@@ -779,8 +815,8 @@ class PosenetActivity :
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
       AlertDialog.Builder(activity)
-        .setMessage(arguments!!.getString(ARG_MESSAGE))
-        .setPositiveButton(android.R.string.ok) { _, _ -> activity!!.finish() }
+        .setMessage(requireArguments().getString(ARG_MESSAGE))
+        .setPositiveButton(android.R.string.ok) { _, _ -> requireActivity().finish() }
         .create()
 
     companion object {
