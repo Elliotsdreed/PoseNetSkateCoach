@@ -22,14 +22,7 @@ import android.app.Dialog
 import android.content.ContentValues
 import android.content.Context
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.ImageFormat
-import android.graphics.Matrix
-import android.graphics.Paint
-import android.graphics.PorterDuff
-import android.graphics.Rect
+import android.graphics.*
 import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraCharacteristics
@@ -164,6 +157,8 @@ class PosenetActivity :
 
   /** Abstract interface to someone holding a display surface.    */
   private var surfaceHolder: SurfaceHolder? = null
+
+  private var scaledBitmap: Bitmap? = null
 
   /** [CameraDevice.StateCallback] is called when [CameraDevice] changes its state.   */
   private val stateCallback = object : CameraDevice.StateCallback() {
@@ -476,7 +471,7 @@ class PosenetActivity :
   /** Set the paint color and size.    */
   private fun setPaint() {
     paint.color = Color.RED
-    paint.textSize = 80.0f
+    paint.textSize = 60.0f
     paint.strokeWidth = 8.0f
   }
 
@@ -558,7 +553,6 @@ class PosenetActivity :
               +
               Math.pow((person.keyPoints[0].position.y - person.keyPoints[15].position.y).toDouble(), 2.0)
 
-
     )
 
     var footAngle = atan2(person.keyPoints[16].position.y.toDouble() - person.keyPoints[15].position.y.toDouble(),
@@ -572,9 +566,21 @@ class PosenetActivity :
         (person.keyPoints[15].position.y > 180) and
         (person.keyPoints[15].position.y < 250) and
         (person.keyPoints[16].position.y > 180) and
-        (person.keyPoints[16].position.y < 250)
+        (person.keyPoints[16].position.y < 250) and
+        (person.keyPoints[0].position.y < 90)
       ) {
+        scaledBitmap?.let { saveMediaToStorage(it, "Stationary") }
         return "Stationary"
+      }
+      if(
+              (person.keyPoints[15].position.y > 180) and
+              (person.keyPoints[15].position.y < 250) and
+              (person.keyPoints[16].position.y > 180) and
+              (person.keyPoints[16].position.y < 250) and
+              (person.keyPoints[0].position.y > 90)
+      )    {
+        scaledBitmap?.let { saveMediaToStorage(it, "Crouch") }
+        return "Crouch"
       }
       if(
         (person.keyPoints[15].position.y > 180) and
@@ -582,6 +588,7 @@ class PosenetActivity :
         (person.keyPoints[16].position.y > 100) and
         (person.keyPoints[16].position.y < 180)
       )    {
+        scaledBitmap?.let { saveMediaToStorage(it, "Initial Lift") }
         return "Initial Lift"
       }
       if(
@@ -590,33 +597,55 @@ class PosenetActivity :
         (person.keyPoints[16].position.y > 180) and
         (person.keyPoints[16].position.y < 250)
       ) {
+        scaledBitmap?.let { saveMediaToStorage(it, "Initial Lift") }
         return "Initial Lift"
       }
       if(
-        (person.keyPoints[15].position.y > 50) and
-        (person.keyPoints[15].position.y < 180)and
-        (person.keyPoints[16].position.y > 50) and
+        (person.keyPoints[15].position.y > 150) and
+        (person.keyPoints[15].position.y < 170)and
+        (person.keyPoints[16].position.y > 150) and
         (person.keyPoints[16].position.y < 180) and
-        (footAngle < 30.00) and
-        (footAngle > 350.00)
+        (footAngle < 15.00) or
+        (footAngle > 345.00)
       ) {
-
-
-        return "Ollie"
+        scaledBitmap?.let { saveMediaToStorage(it, "Low Ollie") }
+        return "Low Ollie"
+        }
+      if(
+              (person.keyPoints[15].position.y > 50) and
+              (person.keyPoints[15].position.y < 150)and
+              (person.keyPoints[16].position.y > 50) and
+              (person.keyPoints[16].position.y < 150) and
+              (footAngle < 15.00) or
+              (footAngle > 345.00)
+      ) {
+        scaledBitmap?.let { saveMediaToStorage(it, "High Ollie") }
+        return "High Ollie"
       }
       if(
-        (person.keyPoints[15].position.y > 50) and
-        (person.keyPoints[15].position.y < 180)and
-        (person.keyPoints[16].position.y > 50) and
-        (person.keyPoints[16].position.y < 180) and
-        (footAngle > 250.00) and
-        (footAngle < 350.00)
+        (person.keyPoints[15].position.y > 150) and
+        (person.keyPoints[15].position.y < 170)and
+        (person.keyPoints[16].position.y > 150) and
+        (person.keyPoints[16].position.y < 170) and
+        (footAngle > 15.00) and
+        (footAngle < 345.00)
       )
       {
-
-        return "Ollie North"
+        scaledBitmap?.let { saveMediaToStorage(it, "Low Ollie North") }
+        return "Low Ollie North"
       }
-
+      if(
+              (person.keyPoints[15].position.y > 50) and
+              (person.keyPoints[15].position.y < 150)and
+              (person.keyPoints[16].position.y > 50) and
+              (person.keyPoints[16].position.y < 150) and
+              (footAngle > 15.00) and
+              (footAngle < 345.00)
+      )
+      {
+        scaledBitmap?.let { saveMediaToStorage(it, "High Ollie North") }
+        return "High Ollie North"
+      }
       else if (person.keyPoints[15].position.y < 50)
       {
         return "Invalid"
@@ -638,7 +667,19 @@ class PosenetActivity :
         )
       }
     }
+    canvas.drawText(
+            "Place the skateboard on the starting line.",
+            (15.0f * widthRatio),
+            (80.0f * heightRatio),
+            paint
+    )
 
+    canvas.drawText(
+            "Start  _________________________________",
+            (15.0f * widthRatio),
+            (300.0f * heightRatio),
+            paint
+    )
     canvas.drawText(
       "Ollie Position = " + olliePosition(),
       (15.0f * widthRatio),
@@ -697,8 +738,8 @@ class PosenetActivity :
   }
 
   //the function I already explained, it is used to save the Bitmap to external storage
-  private fun saveMediaToStorage(bitmap: Bitmap) {
-    val filename = "${System.currentTimeMillis()}.jpg"
+  private fun saveMediaToStorage(bitmap: Bitmap, name: String?) {
+    val filename = "${name + System.currentTimeMillis()}.jpg"
     var fos: OutputStream? = null
     var contentResolver = requireActivity().contentResolver
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -730,12 +771,12 @@ class PosenetActivity :
     val croppedBitmap = cropBitmap(bitmap)
 
     // Created scaled version of bitmap for model input.
-    val scaledBitmap = Bitmap.createScaledBitmap(croppedBitmap, MODEL_WIDTH, MODEL_HEIGHT, true)
-    saveMediaToStorage(scaledBitmap)
+    var scaledBitmapImage = Bitmap.createScaledBitmap(croppedBitmap, MODEL_WIDTH, MODEL_HEIGHT, true)
+    scaledBitmap = scaledBitmapImage
     // Perform inference.
-    val person = posenet.estimateSinglePose(scaledBitmap)
+    val person = posenet.estimateSinglePose(scaledBitmapImage)
     val canvas: Canvas = surfaceHolder!!.lockCanvas()
-    draw(canvas, person, scaledBitmap)
+    draw(canvas, person, scaledBitmapImage)
   }
 
   /**
