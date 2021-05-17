@@ -86,7 +86,7 @@ class PosenetActivity :
   )
 
   /** Threshold for confidence score. */
-  private val minConfidence = 0.5
+  private val minConfidence = 0.8
 
   /** Radius of circle used to draw keypoints.  */
   private val circleRadius = 8.0f
@@ -569,7 +569,7 @@ class PosenetActivity :
         (person.keyPoints[16].position.y < 250) and
         (person.keyPoints[0].position.y < 90)
       ) {
-        scaledBitmap?.let { saveMediaToStorage(it, "Stationary") }
+       // scaledBitmap?.let { saveMediaToStorage(it, "Stationary", "%.2f".format(person.score))}
         return "Stationary"
       }
       if(
@@ -579,7 +579,7 @@ class PosenetActivity :
               (person.keyPoints[16].position.y < 250) and
               (person.keyPoints[0].position.y > 90)
       )    {
-        scaledBitmap?.let { saveMediaToStorage(it, "Crouch") }
+      //  scaledBitmap?.let { saveMediaToStorage(it, "Crouch", "%.2f".format(person.score)) }
         return "Crouch"
       }
       if(
@@ -588,7 +588,7 @@ class PosenetActivity :
         (person.keyPoints[16].position.y > 100) and
         (person.keyPoints[16].position.y < 180)
       )    {
-        scaledBitmap?.let { saveMediaToStorage(it, "Initial Lift") }
+       scaledBitmap?.let { saveMediaToStorage(it, "Initial Lift", "%.2f".format(person.score)) }
         return "Initial Lift"
       }
       if(
@@ -597,53 +597,53 @@ class PosenetActivity :
         (person.keyPoints[16].position.y > 180) and
         (person.keyPoints[16].position.y < 250)
       ) {
-        scaledBitmap?.let { saveMediaToStorage(it, "Initial Lift") }
+        scaledBitmap?.let { saveMediaToStorage(it, "Initial Lift", "%.2f".format(person.score)) }
         return "Initial Lift"
       }
       if(
-        (person.keyPoints[15].position.y > 150) and
-        (person.keyPoints[15].position.y < 170)and
-        (person.keyPoints[16].position.y > 150) and
-        (person.keyPoints[16].position.y < 180) and
+        (person.keyPoints[15].position.y > 155) and
+        (person.keyPoints[15].position.y < 175)and
+        (person.keyPoints[16].position.y > 155) and
+        (person.keyPoints[16].position.y < 175) and
         (footAngle < 15.00) or
         (footAngle > 345.00)
       ) {
-        scaledBitmap?.let { saveMediaToStorage(it, "Low Ollie") }
+        scaledBitmap?.let { saveMediaToStorage(it, "Low Ollie", "%.2f".format(person.score)) }
         return "Low Ollie"
         }
       if(
               (person.keyPoints[15].position.y > 50) and
-              (person.keyPoints[15].position.y < 150)and
+              (person.keyPoints[15].position.y < 155)and
               (person.keyPoints[16].position.y > 50) and
-              (person.keyPoints[16].position.y < 150) and
+              (person.keyPoints[16].position.y < 155) and
               (footAngle < 15.00) or
               (footAngle > 345.00)
       ) {
-        scaledBitmap?.let { saveMediaToStorage(it, "High Ollie") }
+        scaledBitmap?.let { saveMediaToStorage(it, "High Ollie", "%.2f".format(person.score)) }
         return "High Ollie"
       }
       if(
-        (person.keyPoints[15].position.y > 150) and
-        (person.keyPoints[15].position.y < 170)and
-        (person.keyPoints[16].position.y > 150) and
-        (person.keyPoints[16].position.y < 170) and
+        (person.keyPoints[15].position.y > 155) and
+        (person.keyPoints[15].position.y < 175)and
+        (person.keyPoints[16].position.y > 155) and
+        (person.keyPoints[16].position.y < 175) and
         (footAngle > 15.00) and
         (footAngle < 345.00)
       )
       {
-        scaledBitmap?.let { saveMediaToStorage(it, "Low Ollie North") }
+        scaledBitmap?.let { saveMediaToStorage(it, "Low Ollie North", "%.2f".format(person.score)) }
         return "Low Ollie North"
       }
       if(
               (person.keyPoints[15].position.y > 50) and
-              (person.keyPoints[15].position.y < 150)and
+              (person.keyPoints[15].position.y < 155)and
               (person.keyPoints[16].position.y > 50) and
-              (person.keyPoints[16].position.y < 150) and
+              (person.keyPoints[16].position.y < 155) and
               (footAngle > 15.00) and
               (footAngle < 345.00)
       )
       {
-        scaledBitmap?.let { saveMediaToStorage(it, "High Ollie North") }
+        scaledBitmap?.let { saveMediaToStorage(it, "High Ollie North", "%.2f".format(person.score)) }
         return "High Ollie North"
       }
       else if (person.keyPoints[15].position.y < 50)
@@ -738,8 +738,8 @@ class PosenetActivity :
   }
 
   //the function I already explained, it is used to save the Bitmap to external storage
-  private fun saveMediaToStorage(bitmap: Bitmap, name: String?) {
-    val filename = "${name + System.currentTimeMillis()}.jpg"
+  private fun saveMediaToStorage(bitmap: Bitmap, name: String?, score: String?) {
+    val filename = "${score + "_" + name + "_" + System.currentTimeMillis()}.jpg"
     var fos: OutputStream? = null
     var contentResolver = requireActivity().contentResolver
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
